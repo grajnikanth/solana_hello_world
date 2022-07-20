@@ -185,6 +185,7 @@ export async function checkProgram(): Promise<void> {
         fromPubkey: payer.publicKey,
         basePubkey: payer.publicKey,
         seed: GREETING_SEED,
+        // Per web3.js docs, newAccountPubkey has to be pre-calculated with PublicKey.createWithSeed()
         newAccountPubkey: greetedPubkey,
         lamports,
         space: GREETING_SIZE,
@@ -208,6 +209,7 @@ export async function sayHello(): Promise<void> {
   await sendAndConfirmTransaction(
     connection,
     new Transaction().add(instruction),
+    // below [payer] is because signers: signer[] is the signer of this transaction
     [payer],
   );
 }

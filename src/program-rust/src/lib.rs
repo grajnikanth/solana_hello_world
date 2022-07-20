@@ -27,9 +27,20 @@ pub fn process_instruction(
     msg!("Hello World Rust program entrypoint");
 
     // Iterating accounts is safer than indexing
+    // even though accounts is only borrowing or referecing an array with the
+    // iter() function we are asking for a mutable account element of the accounts
+    // array. So in Rust we are allowed to ask for mutable reference to a variable
+    // even though accounts array was just an immutable refernce
+    // iter() function creates an iterator over the &accounts array
     let accounts_iter = &mut accounts.iter();
 
     // Get the account to say hello to
+    // using the iterator obtain the accountInfo struct of the next account 
+    // Since this is the first time we are calling the next_account_info() on
+    // accounts_iter this will be the first element of the accounts and we will
+    // get the account_info of that first account
+    // this variable should have been called account_info instead as that is what
+    // we are getting back
     let account = next_account_info(accounts_iter)?;
 
     // The account must be owned by the program in order to modify its data
@@ -39,8 +50,13 @@ pub fn process_instruction(
     }
 
     // Increment and store the number of times the account has been greeted
+    // de-serialize using the try_from_slice() function the reference to [u8] 
+    // in the account.data
+    // we get an instance of the struct GreetingAccount. we save it as a mutable
+    // variable to change the field counter of the struct's instance
     let mut greeting_account = GreetingAccount::try_from_slice(&account.data.borrow())?;
     greeting_account.counter += 1;
+    // storing the data as bytes by serializing it
     greeting_account.serialize(&mut &mut account.data.borrow_mut()[..])?;
 
     msg!("Greeted {} time(s)!", greeting_account.counter);
