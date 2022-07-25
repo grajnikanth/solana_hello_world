@@ -8,6 +8,10 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
+// import the instruction.rs
+pub mod instruction;
+use crate::instruction::HelloInstruction;
+
 /// Define the type of state stored in accounts
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct GreetingAccount {
@@ -22,9 +26,13 @@ entrypoint!(process_instruction);
 pub fn process_instruction(
     program_id: &Pubkey, // Public key of the account the hello world program was loaded into
     accounts: &[AccountInfo], // The account to say hello to
-    _instruction_data: &[u8], // Ignored, all helloworld instructions are hellos
+    instruction_data: &[u8], 
 ) -> ProgramResult {
     msg!("Hello World Rust program entrypoint");
+
+    // Send the instrcion_data obtained from client to the unpack function
+    // to decode data to HelloInstruction enum
+    let instruction = HelloInstruction::unpack(instruction_data)?;
 
     // Iterating accounts is safer than indexing
     // even though accounts is only borrowing or referecing an array with the
@@ -55,7 +63,19 @@ pub fn process_instruction(
     // we get an instance of the struct GreetingAccount. we save it as a mutable
     // variable to change the field counter of the struct's instance
     let mut greeting_account = GreetingAccount::try_from_slice(&account.data.borrow())?;
-    greeting_account.counter += 1;
+
+    // instruction is an HelloInstruction enum already desctructured from the Result
+    // Check what the instruction value unpacked to. Depending on the
+    // enum variant we do the corresponding action of incrementing or decrementing
+    // or setting the value
+    match instruction {
+        HelloInstruction::Increment => greeting_account.counter += 1,
+        HelloInstruction::Decrement => greeting_account.counter -= 1,
+        HelloInstruction::Set(value) => greeting_account.counter = value,
+    }
+
+
+    
     // storing the data as bytes by serializing it
     greeting_account.serialize(&mut &mut account.data.borrow_mut()[..])?;
 
