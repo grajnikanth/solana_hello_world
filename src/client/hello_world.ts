@@ -14,6 +14,9 @@ import {
 import fs from 'mz/fs';
 import path from 'path';
 import * as borsh from 'borsh';
+// libraries to create byte data for creating instruction_data for the smart contract
+import * as BufferLayout from "@solana/buffer-layout";
+import {Buffer} from "buffer";
 
 import {getPayer, getRpcUrl, createKeypairFromFile} from './utils';
 
@@ -201,6 +204,10 @@ export async function checkProgram(): Promise<void> {
  */
 export async function sayHello(): Promise<void> {
   console.log('Saying hello to', greetedPubkey.toBase58());
+  // Note that  in the TransactionInstruction below "keys" maps to the accounts argument
+  // in the process_instruction() function on the solana smart contract
+  // programId maps to programId in the Rust function
+  // data maps to the instruction_data argrument on the rust function
   const instruction = new TransactionInstruction({
     keys: [{pubkey: greetedPubkey, isSigner: false, isWritable: true}],
     programId,
@@ -233,4 +240,13 @@ export async function reportGreetings(): Promise<void> {
     greeting.counter,
     'time(s)',
   );
+}
+
+// custom instructions data functions to call the Increment, Decreement or Set
+// enums of the smart contract
+function createIncrementInstruction(): Buffer {
+  const layout = BufferLayout.struct([BufferLayout.u8('instruction')]);
+  const data = Buffer.alloc(layout.span);
+  layout.encode({instruction: 0}, data);
+  return data;
 }
